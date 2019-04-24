@@ -98,7 +98,11 @@ namespace :perf do
     puts "HTTP headers: #{HTTP_HEADERS}" unless HTTP_HEADERS.empty?
 
     CURL_HTTP_HEADER_ARGS = HTTP_HEADERS.map { |http_header_name, value| "-H \"#{http_header_name}: #{value}\"" }.join(" ")
-    CURL_BODY_ARG = REQUEST_BODY ? "-d '#{REQUEST_BODY}'" : nil
+    CURL_BODY_ARG = if ENV['CURL_BODY_ARG']
+                      ENV['CURL_BODY_ARG']
+                    else
+                      REQUEST_BODY ? "-d '#{REQUEST_BODY}'" : nil
+                    end
 
     if REQUEST_METHOD != "GET" && REQUEST_BODY
       RACK_ENV_HASH["GATEWAY_INTERFACE"] = "CGI/1.1"
@@ -120,7 +124,7 @@ namespace :perf do
       sleep 1
 
       def call_app(path = File.join("/", PATH_TO_HIT))
-        cmd = "curl -X #{REQUEST_METHOD} #{CURL_HTTP_HEADER_ARGS} #{CURL_BODY_ARG} -s --fail 'http://localhost:#{@port}#{path}' 2>&1"
+        cmd = "curl -X #{REQUEST_METHOD} #{CURL_HTTP_HEADER_ARGS} #{_BODY_ARG} -s --fail 'http://localhost:#{@port}#{path}' 2>&1"
         response = `#{cmd}`
         raise "Bad request to #{cmd.inspect} Response:\n#{ response.inspect }" unless $?.success?
       end
